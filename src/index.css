@@ -2,10 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url();
+
 * {
     min-width: 0;
 }
 
 input {
     color-scheme: dark;
+}
+
+.rdp {
+    --rdp-accent-color: #BEF264;
+    --rdp-selected-color: #000000;
 }

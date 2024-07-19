@@ -4,6 +4,8 @@ import { InviteGuestsModal } from './invite-guests-modal';
 import { ConfirmTripModal } from './confirm-trip-modal';
 import { DestinationAndDateStep } from './steps/destinatio-and-date-step';
 import { InviteGuestsStep } from './steps/invite-guests-step';
+import { DateRange } from "react-day-picker";
+import { api } from '../../lib/axios';
 
 export function CreateTripPage() {
     const navigate = useNavigate();
@@ -12,7 +14,14 @@ export function CreateTripPage() {
     const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
     const [isConfirmTripModalOpen, setIsConfirmTripModalOpen] = useState(false);
 
-    const [emailsToInvite, setEmailsToInvite] = useState(['kaikialvarengasouza098@gmail.com']);
+    const [destination, setDestination] = useState("");
+    const [ownerName, setOwnerName] = useState("");
+    const [ownerEmail, setOwnerEmail] = useState("");
+    const [eventStartAndEndDates, setEventStartAndEndDates] = useState<DateRange | undefined>()
+
+    const [emailsToInvite, setEmailsToInvite] = useState(
+        ['kaikialvarengasouza098@gmail.com']
+    );
 
     function openGuestsInput() {
         setIsGuestInputOpen(true);
@@ -61,9 +70,46 @@ export function CreateTripPage() {
         setEmailsToInvite(newEmailList);
     }
 
-    function createTrip(event: FormEvent<HTMLFormElement>) {
+    async function createTrip(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        navigate('/trips/123');
+
+        if (!destination) {
+            console.log("no destination")
+            return;
+        }
+
+        if (!eventStartAndEndDates?.from || !eventStartAndEndDates?.to) {
+            console.log("no dates")
+            return;
+        }
+
+        if (emailsToInvite.length == 0) {
+            console.log("no email to invite")
+            return;
+        }
+
+        if (!ownerEmail || !ownerName) {
+            console.log("no email or name")
+            return;
+        }
+
+        const response = await api.post("/trips", {
+            destination: destination,
+            starts_at: eventStartAndEndDates.from,
+            ends_at: eventStartAndEndDates.to,
+            emails_to_invite: emailsToInvite,
+            owner_name: ownerName,
+            owner_email: ownerEmail
+        })
+
+        const { tripId } = response.data
+
+        console.log(eventStartAndEndDates)
+        console.log(emailsToInvite)
+        console.log(destination)
+        console.log(ownerEmail)
+        console.log(ownerName)
+        navigate('/trips/' + tripId);
     }
 
     return (
@@ -76,14 +122,17 @@ export function CreateTripPage() {
 
                 <div className='space-y-4'>
 
-                    <DestinationAndDateStep 
+                    <DestinationAndDateStep
                         closeGuestsInput={closeGuestsInput}
                         isGuestInputOpen={isGuestInputOpen}
                         openGuestsInput={openGuestsInput}
+                        setDestination={setDestination}
+                        setEventStartAndEndDates={setEventStartAndEndDates}
+                        eventStartAndEndDates={eventStartAndEndDates}
                     />
 
                     {isGuestInputOpen && (
-                        <InviteGuestsStep 
+                        <InviteGuestsStep
                             emailsToInvite={emailsToInvite}
                             openConfirmTripModal={openConfirmTripModal}
                             openGuestsModal={openGuestsModal}
@@ -102,13 +151,15 @@ export function CreateTripPage() {
                     closeGuestsModal={closeGuestsModal}
                     emailsToInvite={emailsToInvite}
                     removeEmailsFromInvites={removeEmailsFromInvites}
-                />  
+                />
             )}
 
             {isConfirmTripModalOpen && (
-                <ConfirmTripModal 
+                <ConfirmTripModal
                     closeConfirmTripModal={closeConfirmTripModal}
                     createTrip={createTrip}
+                    setOwnerName={setOwnerName}
+                    setOwnerEmail={setOwnerEmail}
                 />
             )}
 
